@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<body style="display: flex; justify-content: center; padding-top: 50px;">
+
+    <div id="main-container" style="border: 2px solid black; padding: 20px; width: 400px; border-radius: 10px;">
+       
+        <center>
+            <h1>Kcet Learning App</h1>
+        </center>
+
+        <hr>
+
+        <div id="quiz-box">
+            <p id="count"></p>
+            <h3 id="question"></h3>
+           
+            <div id="options"></div>
+
+            <br>
+            <div style="display: flex; justify-content: space-between;">
+                <button onclick="change(-1)">Previous</button>
+                <button onclick="change(1)">Next</button>
+            </div>
+        </div>
+
+        <div id="result-box" style="display: none; text-align: center;">
+            <h2>Quiz Completed 🎉</h2>
+            <p id="score"></p>
+            <button onclick="location.reload()">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { q: "What is the national animal of India?", o: ["Lion", "Tiger", "Elephant", "Leopard"], a: 1 },
+            { q: "What is the national bird of India?", o: ["Parrot", "Peacock", "Sparrow", "Eagle"], a: 1 },
+            { q: "What is the national flower of India?", o: ["Rose", "Sunflower", "Lotus", "Lily"], a: 2 },
+            { q: "What is the national tree of India?", o: ["Neem", "Banyan", "Coconut", "Mango"], a: 1 },
+            { q: "What is the national fruit of India?", o: ["Apple", "Banana", "Mango", "Orange"], a: 2 },
+            { q: "What is the capital city of India?", o: ["Mumbai", "Chennai", "New Delhi", "Kolkata"], a: 2 },
+            { q: "What is the currency of India?", o: ["Dollar", "Rupee", "Yen", "Euro"], a: 1 },
+            { q: "Which is the largest continent in the world?", o: ["Africa", "Europe", "Asia", "Australia"], a: 2 },
+            { q: "Which is the highest mountain in the world?", o: ["K2", "Mount Everest", "Kangchenjunga", "Makalu"], a: 1 },
+            { q: "Which is the largest planet in our solar system?", o: ["Earth", "Mars", "Jupiter", "Saturn"], a: 2 }
+        ];
+
+        let current = 0, answers = [];
+
+        function load() {
+            const data = quizData[current];
+            document.getElementById('count').innerText = `Question ${current + 1} of ${quizData.length}`;
+            document.getElementById('question').innerText = data.q;
+           
+            document.getElementById('options').innerHTML = data.o.map((opt, i) =>
+                `<div style="margin-bottom: 5px;">
+                    <input type="radio" name="opt" id="o${i}" value="${i}" ${answers[current] == i ? 'checked' : ''}>
+                    <label for="o${i}">${opt}</label>
+                </div>`
+            ).join('');
+        }
+
+        window.change = (dir) => {
+            const selected = document.querySelector('input[name="opt"]:checked');
+            if (dir > 0 && !selected) return alert("Please select an answer");
+            if (selected) answers[current] = parseInt(selected.value);
+           
+            current += dir;
+
+            if (current >= quizData.length) {
+                showResult();
+            } else if (current >= 0) {
+                load();
+            } else {
+                current = 0;
+            }
+        }
+
+        function showResult() {
+            const score = quizData.filter((q, i) => q.a === answers[i]).length;
+            document.getElementById('quiz-box').style.display = 'none';
+            document.getElementById('result-box').style.display = 'block';
+            document.getElementById('score').innerText = `Your Score: ${score} / ${quizData.length}`;
+        }
+
+        load();
+    </script>
+</body>
+</html>
