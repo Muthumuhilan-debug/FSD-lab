@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="todoApp">
+<head>
+<meta charset="UTF-8">
+<title>Personal To-Do List</title>
+
+<!-- AngularJS CDN -->
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0f2f5;
+    padding: 20px;
+}
+
+.container {
+    max-width: 500px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin: auto;
+}
+
+h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-top: 0;
+}
+
+.input-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f4f4f4;
+    padding-bottom: 15px;
+}
+
+input[type="text"],
+input[type="date"],
+select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    outline: none;
+}
+
+input[type="text"] {
+    flex: 2;
+    min-width: 180px;
+}
+
+.add-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    transition: 0.2s;
+}
+
+.task-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.task-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.prio-1 { background: #dc3545; }
+.prio-2 { background: #fd7e14; }
+.prio-3 { background: #0dcaf0; }
+
+.completed-text {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.deadline-info {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 5px;
+    margin-left: 28px;
+}
+
+.overdue {
+    color: #d9534f;
+    font-weight: bold;
+}
+
+.actions button {
+    cursor: pointer;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.edit-btn { background: #ffc107; }
+.delete-btn { background: #ff4d4d; color: white; }
+
+.empty-msg {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body ng-controller="todoController">
+
+<div class="container">
+<h2>📝 My Tasks</h2>
+
+<div class="input-group">
+    <input type="text" ng-model="newTask" placeholder="Add a new task...">
+
+    <select ng-model="newPriority">
+        <option value="1">High</option>
+        <option value="2">Medium</option>
+        <option value="3">Low</option>
+    </select>
+
+    <input type="date" ng-model="newDeadline">
+
+    <button class="add-btn" ng-click="addItem()">Add</button>
+</div>
+
+<div class="empty-msg" ng-if="todoList.length === 0">
+    No tasks yet. Add one above to get started!
+</div>
+
+<ul>
+<li ng-repeat="item in todoList | orderBy:['completed','priority']">
+
+<div class="task-header">
+<div class="task-main">
+
+<input type="checkbox" ng-model="item.completed">
+
+<span ng-if="!item.isEditing" ng-class="{'completed-text': item.completed}">
+    <span class="badge prio-{{item.priority}}">
+        {{ item.priority == 1 ? 'P1' : (item.priority == 2 ? 'P2' : 'P3') }}
+    </span>
+    <strong>{{ item.task }}</strong>
+</span>
+
+<input type="text" ng-if="item.isEditing" ng-model="item.task" style="width:100%">
+</div>
+
+<div class="actions">
+    <button class="edit-btn" ng-click="toggleEdit(item)">
+        {{ item.isEditing ? 'Save' : 'Edit' }}
+    </button>
+
+    <button class="delete-btn" ng-click="deleteItem(item)">Delete</button>
+</div>
+</div>
+
+<div class="deadline-info" ng-if="item.deadline">
+    <span ng-class="{'overdue': isOverdue(item.deadline) && !item.completed}">
+        📅 Due: {{ item.deadline | date:'MMM d, yyyy' }}
+        <span ng-if="isOverdue(item.deadline) && !item.completed">
+            (Overdue!)
+        </span>
+    </span>
+</div>
+
+</li>
+</ul>
+</div>
+
+<script>
+var app = angular.module('todoApp', []);
+
+app.controller('todoController', function($scope) {
+
+    $scope.todoList = [];
+    $scope.newPriority = "2";
+
+    $scope.addItem = function() {
+        if ($scope.newTask) {
+            $scope.todoList.push({
+                task: $scope.newTask,
+                priority: parseInt($scope.newPriority),
+                deadline: $scope.newDeadline ? new Date($scope.newDeadline) : null,
+                completed: false,
+                isEditing: false
+            });
+
+            $scope.newTask = "";
+            $scope.newDeadline = null;
+            $scope.newPriority = "2";
+        }
+    };
+
+    $scope.toggleEdit = function(item) {
+        item.isEditing = !item.isEditing;
+    };
+
+    $scope.deleteItem = function(item) {
+        var index = $scope.todoList.indexOf(item);
+        $scope.todoList.splice(index, 1);
+    };
+
+    $scope.isOverdue = function(deadline) {
+        if (!deadline) return false;
+
+        var today = new Date();
+        today.setHours(0,0,0,0);
+
+        var dueDate = new Date(deadline);
+        dueDate.setHours(0,0,0,0);
+
+        return dueDate < today;
+    };
+});
+</script>
+
+</body>
+</html>
